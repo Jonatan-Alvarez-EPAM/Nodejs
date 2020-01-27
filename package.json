@@ -4,10 +4,11 @@
   "description": "NodeJs mentoring program",
   "main": "index.js",
   "scripts": {
+    "tsc": "tsc --build --watch",
     "test": "echo \"Error: no test specified\" && exit 1",
     "h1-task1": "nodemon --exec babel-node ./hometask-1/task1.js",
     "h1-task2": "babel-node ./hometask-1/task2.js",
-    "h2-task": "nodemon --exec babel-node ./hometask-2/task.js"
+    "start": "cls && tsc  && nodemon --exec babel-node ./build/app.js"
   },
   "repository": {
     "type": "git",
@@ -29,12 +30,22 @@
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-react": "^7.17.0",
     "nodemon": "^2.0.1",
+    "typescript": "^3.7.5",
     "uuid": "^3.3.3"
   },
   "dependencies": {
     "@hapi/joi": "^16.1.8",
+    "@types/express": "^4.17.2",
+    "@types/hapi__joi": "^16.0.8",
+    "@types/joi": "^14.3.4",
+    "@types/node": "^13.5.0",
     "body-parser": "^1.19.0",
     "csvtojson": "^2.0.10",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "pg": "^7.17.1",
+    "pg-hstore": "^2.3.3",
+    "reflect-metadata": "^0.1.13",
+    "sequelize": "^5.21.3",
+    "typedi": "^0.8.0"
   }
 }
