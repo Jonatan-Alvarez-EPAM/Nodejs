@@ -1,7 +1,8 @@
 // Setup
-const Joi = require('@hapi/joi');
-const express = require('express');
-const app = express();
+import { UserService } from './services';
+import express = require('express');
+import Joi = require('@hapi/joi');
+const app: express.Application = express();
 const port = process.env.PORT || 3000;
 
 // Config
@@ -17,31 +18,6 @@ const schema = Joi.object({
     age: Joi.number().integer().min(4).max(130).required(),
     isDeleted: Joi.boolean().required(),
 });
-
-// Locals
-app.locals.users = [
-    {
-        id: 'ID1',
-        login: 'login1',
-        password: 'password1',
-        age: 10,
-        isDeleted: false,
-    },
-    {
-        id: 'ID2',
-        login: 'login2',
-        password: 'password2',
-        age: 50,
-        isDeleted: false,
-    },
-    {
-        id: 'ID3',
-        login: 'login3',
-        password: 'password3',
-        age: 160,
-        isDeleted: false,
-    },
-];
 
 // API
 
@@ -59,9 +35,11 @@ app.get('/user/:id', (req, res, next) => {
     next();
 });
 
-app.get('/user/:id', (req, res) => {
+app.get('/user/:id', async (req, res) => {
     const { id } = req.params;
-    const user = req.app.locals.users.find(element => element.id === id);
+    const userServiceInstance = new UserService();
+    const user = await userServiceInstance.getUserById(id);
+
     if (!id) {
         res.status(404).json({
             message: `NO ID PROVIDED`,
@@ -83,7 +61,7 @@ app.post('/user', (req, res, next) => {
     next();
 });
 
-app.post('/user', validateSchema(schema), (req, res) => {
+app.post('/user', validateSchema(schema), async (req, res) => {
     const keysLength = Object.keys(req.body).length;
     if (keysLength === 0) {
         res.status(400).json({
@@ -97,15 +75,23 @@ app.post('/user', validateSchema(schema), (req, res) => {
     }
 
     const { id, login, password, age, isDeleted } = req.body;
-    const isIdAlreadyUsed = req.app.locals.users.some(element => element.id === id);
+    const userServiceInstance = new UserService();
+    const user = await userServiceInstance.getUserById(id);
+
+    const isIdAlreadyUsed = !!user;
     if (isIdAlreadyUsed) {
         res.status(404).json({
             message: `ID: '${id}' is already used`,
         });
-    }
-    else {
-        req.app.locals.users.push({ id, login, password, age, isDeleted });
-        res.status(200);
+    } else {
+        const newUser = await userServiceInstance.createUser({ id, login, password, age, isDeleted });
+        if (!newUser) {
+            res.status(404).json({
+                message: `Error creating new user with info ${newUser}`,
+            });
+        } else {
+            res.status(200);
+        }
     }
     res.end();
 });
@@ -114,16 +100,26 @@ app.put('/user', (req, res, next) => {
     next();
 });
 
-app.put('/user', validateSchema(schema), (req, res) => {
-    const { id } = req.body;
-    const userIndex = req.app.locals.users.findIndex(element => element.id === id);
-    if (userIndex === -1) {
+app.put('/user', validateSchema(schema), async (req, res) => {
+    const userInfo = req.body;
+    const id = userInfo.id;
+    const userServiceInstance = new UserService();
+    const user = await userServiceInstance.getUserById(id);
+
+    if (!user) {
         res.status(404).json({
             message: `USER WITH ID: '${id}'  NOT FOUND :(`,
         });
     } else {
-        req.app.locals.users[userIndex] = req.body;
-        res.status(200);
+        const updatedUser = await userServiceInstance.updateUser(userInfo);
+        if (!updatedUser) {
+            res.status(404).json({
+                message: `Error updating info ${userInfo} for user with ID: '${id}'`,
+            });
+        }
+        else {
+            res.status(200);
+        }
     }
     res.end();
 });
@@ -132,15 +128,13 @@ app.get('/AutoSuggestUsers', (req, res, next) => {
     next();
 });
 
-app.get('/AutoSuggestUsers', (req, res) => {
-    const { loginSubstring, limit } = req.query;;
-    const suggestion =
-        req.app.locals.users.filter(element => element.id.includes(loginSubstring))
-            .sort((a, b) => (a.id > b.id) ? 1 : -1)
-            .slice(0, limit || 5);
+app.get('/AutoSuggestUsers', async (req, res) => {
+    const { loginSubstring, limit } = req.query;
+    const userServiceInstance = new UserService();
+    const suggestions = await userServiceInstance.listUsers(loginSubstring, limit);
 
     res.status(200).json({
-        results: suggestion,
+        results: suggestions,
     }).end();
 });
 
@@ -148,15 +142,16 @@ app.delete('/user:id', (req, res, next) => {
     next();
 });
 
-app.delete('/user', (req, res) => {
+app.delete('/user', async (req, res) => {
     const { id } = req.query;
-    const userIndex = req.app.locals.users.findIndex(element => element.id === id);
-    if (userIndex === -1) {
+    const userServiceInstance = new UserService();
+    const deletedUser = await userServiceInstance.deleteUser(id);
+    if (!deletedUser) {
         res.status(404).json({
-            message: `USER WITH ID: '${id}'  NOT FOUND :(`,
+            message: `Error deleting user with ID: '${id}'`,
         });
-    } else {
-        req.app.locals.users[userIndex].isDeleted = true;
+    }
+    else {
         res.status(200);
     }
     res.end();
@@ -174,8 +169,8 @@ app.listen(port, () => console.log(`App listening on port ${port}!`));
 
 // error mapping.
 function errorResponse(schemaErrors) {
-    const errors = schemaErrors.map((error) => {
-        return { path, message } = error;
+    const errors = schemaErrors.map((error: Joi.ErrorReport) => {
+        return { path: error.path, message: error.message };
     });
     return {
         status: 'failed',
