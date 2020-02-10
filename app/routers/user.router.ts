@@ -1,5 +1,5 @@
 // Setup
-import { UserService, UserGroupService } from './services';
+import { UserService } from '@app/services';
 import express = require('express');
 import Joi = require('@hapi/joi');
 const app: express.Application = express();
@@ -152,37 +152,6 @@ app.delete('/user', async (req, res) => {
         });
     }
     else {
-        res.status(200);
-    }
-    res.end();
-});
-
-// Add users to group.
-app.post('/addUsersToGroup', (req, res, next) => {
-    next();
-});
-
-app.post('/addUsersToGroup', async (req, res) => {
-    const keysLength = Object.keys(req.body).length;
-    if (keysLength === 0) {
-        res.status(400).json({
-            message: `Not payload found!`,
-        }).end();
-    }
-    if (keysLength < 2) {
-        res.status(400).json({
-            message: `Missing fields!`,
-        }).end();
-    }
-
-    const { groupId, userIds } = req.body;
-    const userGroupServiceInstance = new UserGroupService();
-    const result = await userGroupServiceInstance.addUsersToGroup(userIds, groupId);
-    if (!result) {
-        res.status(404).json({
-            message: `Error adding users: ${userIds} to group: ${groupId}`,
-        });
-    } else {
         res.status(200);
     }
     res.end();
