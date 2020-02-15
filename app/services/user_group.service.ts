@@ -1,16 +1,22 @@
-import { UserGroupModel } from '../models';
-import { Op } from 'sequelize';
+import { UserGroupModel, UserModel } from '../models';
 import { db } from '../models/index';
 
 export class UserGroupService {
     constructor() { }
 
-    public async addUsersToGroup(userIds: string[], groupId: string): Promise<Boolean> {
-        try {
+    public async addUsersToGroup(userIds: string[], groupId: string): Promise<boolean> {
 
+        try {
             await db.transaction(async (t) => {
                 for (const userId of userIds) {
-                    UserGroupModel.create({ userId, groupId }, { transaction: t });
+                    await UserGroupModel.findOrCreate(
+                        {
+                            where: {
+                                userId: userId,
+                                groupId: groupId,
+                            },
+                            transaction: t,
+                        });
                 }
             });
             return true;

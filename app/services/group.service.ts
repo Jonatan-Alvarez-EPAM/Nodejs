@@ -15,7 +15,7 @@ export class GroupService {
 
     public async createGroup(group: Group): Promise<Group> {
         try {
-            const newGroup = GroupModel.create(group);
+            const newGroup = await GroupModel.create(group);
             return newGroup;
         } catch (error) {
             console.error(`Error creating group with params: ${group} -> Error: ${error}`);
