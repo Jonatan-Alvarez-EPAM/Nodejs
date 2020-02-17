@@ -1,41 +1,22 @@
-// Setup
-import { UserService } from '@app/services';
+// user.router.js - Group route module
+import { UserService, UserGroupService } from '../services';
+import { validateSchema, userSchema, userGroupSchema } from '.';
 import express = require('express');
-import Joi = require('@hapi/joi');
-const app: express.Application = express();
-const port = process.env.PORT || 3000;
 
-// Config
-app.use(express.json());
-app.set('case sensitive routing', true);
-app.set('strict routing', true);
-app.set('x-powered-by', false);
-
-const userSchema = Joi.object({
-    id: Joi.string().required(),
-    login: Joi.string().required(),
-    password: Joi.string().alphanum().required(),
-    age: Joi.number().integer().min(4).max(130).required(),
-    isDeleted: Joi.boolean().required(),
-});
+const router = express.Router();
 
 // API
 
-app.use((req, res, next) => {
-    console.log(Date.now());
-    next();
-});
-
 // Get user by id
-app.param('id', (req, res, next) => {
+router.param('id', (req, res, next) => {
     next();
 });
 
-app.get('/user/:id', (req, res, next) => {
+router.get('/:id', (req, res, next) => {
     next();
 });
 
-app.get('/user/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
     const { id } = req.params;
     const userServiceInstance = new UserService();
     const user = await userServiceInstance.getUserById(id);
@@ -57,11 +38,11 @@ app.get('/user/:id', async (req, res) => {
 });
 
 // Create user.
-app.post('/user', (req, res, next) => {
+router.post('/', (req, res, next) => {
     next();
 });
 
-app.post('/user', validateSchema(userSchema), async (req, res) => {
+router.post('/', validateSchema(userSchema), async (req, res) => {
     const keysLength = Object.keys(req.body).length;
     if (keysLength === 0) {
         res.status(400).json({
@@ -96,11 +77,12 @@ app.post('/user', validateSchema(userSchema), async (req, res) => {
     res.end();
 });
 
-app.put('/user', (req, res, next) => {
+// Update user
+router.put('/', (req, res, next) => {
     next();
 });
 
-app.put('/user', validateSchema(userSchema), async (req, res) => {
+router.put('/', validateSchema(userSchema), async (req, res) => {
     const userInfo = req.body;
     const id = userInfo.id;
     const userServiceInstance = new UserService();
@@ -124,11 +106,12 @@ app.put('/user', validateSchema(userSchema), async (req, res) => {
     res.end();
 });
 
-app.get('/AutoSuggestUsers', (req, res, next) => {
+// List users
+router.get('/AutoSuggestUsers', (req, res, next) => {
     next();
 });
 
-app.get('/AutoSuggestUsers', async (req, res) => {
+router.get('/AutoSuggestUsers', async (req, res) => {
     const { loginSubstring, limit } = req.query;
     const userServiceInstance = new UserService();
     const suggestions = await userServiceInstance.listUsers(loginSubstring, limit);
@@ -138,11 +121,12 @@ app.get('/AutoSuggestUsers', async (req, res) => {
     }).end();
 });
 
-app.delete('/user:id', (req, res, next) => {
+// Delete user
+router.delete('/', (req, res, next) => {
     next();
 });
 
-app.delete('/user', async (req, res) => {
+router.delete('/', async (req, res) => {
     const { id } = req.query;
     const userServiceInstance = new UserService();
     const deletedUser = await userServiceInstance.deleteUser(id);
@@ -157,39 +141,36 @@ app.delete('/user', async (req, res) => {
     res.end();
 });
 
-// Error handling
-
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    next(err);
+// Add users to group.
+router.post('/addUsersToGroup', (req, res, next) => {
+    next();
 });
 
-// Start
-app.listen(port, () => console.log(`App listening on port ${port}!`));
-
-// error mapping.
-function errorResponse(schemaErrors) {
-    const errors = schemaErrors.map((error: Joi.ErrorReport) => {
-        return { path: error.path, message: error.message };
-    });
-    return {
-        status: 'failed',
-        errors,
+router.post('/addUsersToGroup', validateSchema(userGroupSchema), async (req, res) => {
+    const keysLength = Object.keys(req.body).length;
+    if (keysLength === 0) {
+        res.status(400).json({
+            message: `Not payload found!`,
+        }).end();
     }
-}
+    if (keysLength < 2) {
+        res.status(400).json({
+            message: `Missing fields!`,
+        }).end();
+    }
 
-// Middleware validation
-function validateSchema(schema) {
-    return (req, res, next) => {
-        const { error } = schema.validate(req.body, {
-            abortEarly: false,
-            allowUnknown: false,
+    const { groupId, userIds } = req.body;
+    const userGroupServiceInstance = new UserGroupService();
+    const result = await userGroupServiceInstance.addUsersToGroup(userIds, groupId);
+    console.log("RESULT:", result);
+    if (!result) {
+        res.status(404).json({
+            message: `Error adding users: ${userIds} to group: ${groupId}`,
         });
-
-        if (error && error.isJoi) {
-            res.status(400).json(errorResponse(error.details));
-        } else {
-            next();
-        }
+    } else {
+        res.status(200);
     }
-}
+    res.end();
+});
+
+module.exports = router;

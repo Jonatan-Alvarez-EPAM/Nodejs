@@ -1,40 +1,22 @@
-// Setup
-import { PermissionEnum } from '@app/types'
-import { GroupService } from '@app/services';
+// group.router.js - Group route module
+import { GroupService } from '../services';
+import { validateSchema, groupSchema } from '.';
 import express = require('express');
-import Joi = require('@hapi/joi');
-const app: express.Application = express();
-const port = process.env.PORT || 3000;
 
-// Config
-app.use(express.json());
-app.set('case sensitive routing', true);
-app.set('strict routing', true);
-app.set('x-powered-by', false);
-
-const groupSchema = Joi.object({
-    id: Joi.string().required(),
-    name: Joi.string().required(),
-    permissions: Joi.array().required().items(
-        Joi.string().valid(PermissionEnum.READ, PermissionEnum.WRITE, PermissionEnum.DELETE, PermissionEnum.SHARE, PermissionEnum.UPLOAD_FILES)),
-});
+const router = express.Router();
 
 // API
 
-app.use((req, res, next) => {
-    next();
-});
-
 // Get group by id
-app.param('id', (req, res, next) => {
+router.param('id', (req, res, next) => {
     next();
 });
 
-app.get('/group/:id', (req, res, next) => {
+router.get('/:id', (req, res, next) => {
     next();
 });
 
-app.get('/group/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
     const { id } = req.params;
     const groupServiceInstance = new GroupService();
     const group = await groupServiceInstance.getGroupById(id);
@@ -56,11 +38,11 @@ app.get('/group/:id', async (req, res) => {
 });
 
 // Create group.
-app.post('/group', (req, res, next) => {
+router.post('/', (req, res, next) => {
     next();
 });
 
-app.post('/group', validateSchema(groupSchema), async (req, res) => {
+router.post('/', validateSchema(groupSchema), async (req, res) => {
     const keysLength = Object.keys(req.body).length;
     if (keysLength === 0) {
         res.status(400).json({
@@ -95,11 +77,12 @@ app.post('/group', validateSchema(groupSchema), async (req, res) => {
     res.end();
 });
 
-app.put('/group', (req, res, next) => {
+// Update group
+router.put('/', (req, res, next) => {
     next();
 });
 
-app.put('/group', validateSchema(groupSchema), async (req, res) => {
+router.put('/', validateSchema(groupSchema), async (req, res) => {
     const groupInfo = req.body;
     const id = groupInfo.id;
     const groupServiceInstance = new GroupService();
@@ -123,11 +106,12 @@ app.put('/group', validateSchema(groupSchema), async (req, res) => {
     res.end();
 });
 
-app.get('/listGroups', (req, res, next) => {
+// List groups
+router.get('/listGroups', (req, res, next) => {
     next();
 });
 
-app.get('/listGroups', async (req, res) => {
+router.get('/listGroups', async (req, res) => {
     const groupServiceInstance = new GroupService();
     const groups = await groupServiceInstance.listGroups();
 
@@ -136,11 +120,12 @@ app.get('/listGroups', async (req, res) => {
     }).end();
 });
 
-app.delete('/group:id', (req, res, next) => {
+// Delete groups
+router.delete('/', (req, res, next) => {
     next();
 });
 
-app.delete('/group', async (req, res) => {
+router.delete('/', async (req, res) => {
     const { id } = req.query;
     const groupServiceInstance = new GroupService();
     const deletedGroup = await groupServiceInstance.deleteGroup(id);
@@ -155,39 +140,4 @@ app.delete('/group', async (req, res) => {
     res.end();
 });
 
-// Error handling
-
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    next(err);
-});
-
-// Start
-app.listen(port, () => console.log(`App listening on port ${port}!`));
-
-// error mapping.
-function errorResponse(schemaErrors) {
-    const errors = schemaErrors.map((error: Joi.ErrorReport) => {
-        return { path: error.path, message: error.message };
-    });
-    return {
-        status: 'failed',
-        errors,
-    }
-}
-
-// Middleware validation
-function validateSchema(schema) {
-    return (req, res, next) => {
-        const { error } = schema.validate(req.body, {
-            abortEarly: false,
-            allowUnknown: false,
-        });
-
-        if (error && error.isJoi) {
-            res.status(400).json(errorResponse(error.details));
-        } else {
-            next();
-        }
-    }
-}
+module.exports = router;

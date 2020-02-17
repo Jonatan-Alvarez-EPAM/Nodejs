@@ -16,7 +16,7 @@ export class UserService {
 
     public async createUser(user: User): Promise<User> {
         try {
-            const newUser = UserModel.create(user);
+            const newUser = await UserModel.create(user);
             return newUser;
         } catch (error) {
             console.error(`Error creating user with params: ${user} -> Error: ${error}`);
