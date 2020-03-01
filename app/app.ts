@@ -1,5 +1,6 @@
 // Setup
 import express = require('express');
+import { appLogger } from './logger';
 const port = process.env.PORT || 3000;
 const app: express.Application = express();
 const groupRouter = require('./routers/group.router.js');
@@ -12,7 +13,7 @@ app.set('strict routing', true);
 app.set('x-powered-by', false);
 
 app.use((req, res, next) => {
-    console.log(Date.now());
+    appLogger.info(`${req.method} ${req.path} ${JSON.stringify(req.params)}`);
     next();
 });
 
@@ -22,8 +23,9 @@ app.use('/group', groupRouter);
 
 // Error handling
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    next(err);
+    appLogger.error(`ERROR: ${err}`);
+    res.status(500).send('Oops something went wrong :(');
+    res.render('error', { error: err });
 });
 
 // Start
