@@ -6,6 +6,12 @@ NodeJs mentoring program 2020
 `npm run start`
 
 ## API
+### AUTHORIZATION
+- Login:
+  - **Method:** POST
+  - **Payload:** ``{username:string, password:string}``
+  - **Example:** ``http://localhost:3000/login``
+
 ### USER
 - Get user info:
   - **Method:** GET
