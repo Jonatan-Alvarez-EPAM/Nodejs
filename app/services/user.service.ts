@@ -5,6 +5,15 @@ import { Op } from 'sequelize';
 export class UserService {
     constructor() { }
 
+    public async authenticate(login: string, password: string): Promise<User> {
+        try {
+            const user = await UserModel.findOne({ where: { login, password } });
+            return user;
+        } catch (error) {
+            console.error('User not found.');
+        }
+    }
+
     public async getUserById(id: string): Promise<User> {
         try {
             const user = await UserModel.findOne({ where: { id } });

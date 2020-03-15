@@ -24,6 +24,11 @@ export const userGroupSchema = Joi.object({
     groupId: groupId,
 });
 
+export const loginSchema = Joi.object({
+    username: Joi.string().alphanum().required(),
+    password: Joi.string().alphanum().required(),
+});
+
 
 // error mapping.
 export function errorResponse(schemaErrors) {
