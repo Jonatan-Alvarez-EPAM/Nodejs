@@ -2,11 +2,26 @@
 import { UserService, UserGroupService } from '../services';
 import { validateSchema, userSchema, userGroupSchema } from '.';
 import { logError } from '../logger';
-import express = require('express');
+const express = require('express');
 
 const router = express.Router();
 
 // API
+
+// List users
+router.get('/AutoSuggestUsers', (req, res, next) => {
+    next();
+});
+
+router.get('/AutoSuggestUsers', async (req, res) => {
+    const { loginSubstring, limit } = req.query;
+    const userServiceInstance = new UserService();
+    const suggestions = await userServiceInstance.listUsers(loginSubstring, limit);
+
+    res.status(200).json({
+        results: suggestions,
+    }).end();
+});
 
 // Get user by id
 router.param('id', (req, res, next) => {
@@ -113,21 +128,6 @@ router.put('/', validateSchema(userSchema), async (req, res) => {
         }
     }
     res.end();
-});
-
-// List users
-router.get('/AutoSuggestUsers', (req, res, next) => {
-    next();
-});
-
-router.get('/AutoSuggestUsers', async (req, res) => {
-    const { loginSubstring, limit } = req.query;
-    const userServiceInstance = new UserService();
-    const suggestions = await userServiceInstance.listUsers(loginSubstring, limit);
-
-    res.status(200).json({
-        results: suggestions,
-    }).end();
 });
 
 // Delete user
