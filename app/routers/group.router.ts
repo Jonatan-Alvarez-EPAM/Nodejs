@@ -2,11 +2,25 @@
 import { GroupService } from '../services';
 import { validateSchema, groupSchema } from '.';
 import { logError } from '../logger';
-import express = require('express');
+const express = require('express');
 
 const router = express.Router();
 
 // API
+
+// List groups
+router.get('/listGroups', (req, res, next) => {
+    next();
+});
+
+router.get('/listGroups', async (req, res) => {
+    const groupServiceInstance = new GroupService();
+    const groups = await groupServiceInstance.listGroups();
+
+    res.status(200).json({
+        results: groups,
+    }).end();
+});
 
 // Get group by id
 router.param('id', (req, res, next) => {
@@ -113,20 +127,6 @@ router.put('/', validateSchema(groupSchema), async (req, res) => {
         }
     }
     res.end();
-});
-
-// List groups
-router.get('/listGroups', (req, res, next) => {
-    next();
-});
-
-router.get('/listGroups', async (req, res) => {
-    const groupServiceInstance = new GroupService();
-    const groups = await groupServiceInstance.listGroups();
-
-    res.status(200).json({
-        results: groups,
-    }).end();
 });
 
 // Delete groups

@@ -3,7 +3,7 @@ import { APP_SECRET_KEY } from '../data-access'
 import { UserService } from '../services';
 import { validateSchema, loginSchema } from '.';
 import { logError } from '../logger';
-import express = require('express');
+const express = require('express');
 const jwt = require('jsonwebtoken');
 
 const router = express.Router();
@@ -31,11 +31,11 @@ router.post('/', validateSchema(loginSchema), async (req, res) => {
         res.status(404).json({
             message: 'Invalid username or password.',
         }).end();
+    } else {
+        const tokenData = { sub: user.id };
+        const token = jwt.sign(tokenData, APP_SECRET_KEY, { expiresIn: '10m' });
+        res.send(token);
     }
-
-    const tokenData = { sub: user.id };
-    const token = jwt.sign(tokenData, APP_SECRET_KEY, { expiresIn: '10m' });
-    res.send(token);
 });
 
 module.exports = router;

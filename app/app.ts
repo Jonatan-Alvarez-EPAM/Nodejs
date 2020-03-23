@@ -5,9 +5,9 @@ import { checkToken } from './data-access'
 const port = process.env.PORT || 3000;
 const app: express.Application = express();
 const cors = require('cors');
-const groupRouter = require('./routers/group.router.js');
-const userRouter = require('./routers/user.router.js');
-const loginRouter = require('./routers/login.router.js');
+const groupRouter = require('./routers/group.router');
+const userRouter = require('./routers/user.router');
+const loginRouter = require('./routers/login.router');
 
 // Config
 app.use(express.json());
@@ -37,3 +37,5 @@ app.use((err, req, res, next) => {
 
 // Start
 app.listen(port, () => console.log(`App listening on port ${port}!`));
+
+module.exports = app;

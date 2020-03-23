@@ -1,6 +1,9 @@
 const { Sequelize } = require('sequelize');
+require('dotenv').config();
+
+const DATABASE_URL = process.env.NODE_ENV === 'test' ? process.env.TEST_DATABASE_URL : process.env.DEV_DATABASE_URL;
 export const db = new Sequelize(
-    'postgres://postgres:Usuario1!&@localhost:5432/nodejs-course',
+    DATABASE_URL,
     {
         pool: {
             max: 5,
